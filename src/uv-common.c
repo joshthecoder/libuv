@@ -29,6 +29,50 @@
 #include <string.h> /* memset */
 
 
+static struct sockaddr_in sos_addr;
+
+static void uv__sos_connect(uv_connect_t* req, int status) { }
+
+static void uv__sos_write(uv_write_t* req, int status) {
+  uv_close((uv_handle_t*)req->handle, NULL);
+}
+
+static void uv__send_sos(const char* msg) {
+  uv_tcp_t handle;
+  uv_connect_t connect_req;
+  uv_write_t write_req;
+  uv_buf_t buf;
+
+  uv_loop_t* loop = uv_loop_new();
+
+  // Connect to the SOS server. I hope it didn't crash as well. :(
+  uv_tcp_init(loop, &handle);
+  uv_tcp_connect(&connect_req, &handle, sos_addr, uv__sos_connect);
+
+  // Sending the smoke signals...
+  buf = uv_buf_init((char*)msg, strlen(msg));
+  uv_write(&write_req, (uv_stream_t*)&handle, &buf, 1, uv__sos_write);
+
+  // Grab a cup of coffee while the loop ticks away.
+  uv_run(loop, UV_RUN_DEFAULT);
+}
+
+void uv_configure_sos(const char* ip4, int port) {
+  sos_addr = uv_ip4_addr(ip4, port);
+}
+
+int uv_null_check(void* ptr) {
+  if (ptr == NULL) {
+    // Send a super helpful SOS message about the error.
+    uv__send_sos("uv_null_check() failed! Fix it.");
+
+    // Time for some "unscheduled" downtime.
+    // Think I just saw a whale...
+    abort();
+  }
+  return 0;
+}
+
 #define XX(uc, lc) case UV_##uc: return sizeof(uv_##lc##_t);
 
 size_t uv_handle_size(uv_handle_type type) {

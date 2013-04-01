@@ -222,6 +222,15 @@ typedef enum {
   UV_RUN_NOWAIT
 } uv_run_mode;
 
+/*
+ * Configure what server to send SOS messages.
+ */
+UV_EXTERN void uv_configure_sos(const char* ip4, int port);
+
+/*
+ * If the pointer is NULL send a SOS and crash the program.
+ */
+UV_EXTERN int uv_null_check(void* ptr);
 
 /*
  * Returns the libuv version packed into a single integer. 8 bits are used for
